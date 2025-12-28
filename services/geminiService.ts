@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Transaction, Budget } from "../types";
 
-const API_KEY = process.env.API_KEY || '';
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 export const getFinancialAdvice = async (transactions: Transaction[], budgets: Budget[]) => {
   if (!API_KEY) return "API key is missing. Please check your environment variables.";
