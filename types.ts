@@ -5,6 +5,7 @@ export interface Transaction {
   id: string;
   amount: number;
   category: string;
+  subcategory?: string;
   type: TransactionType;
   date: string;
   description: string;
@@ -13,6 +14,10 @@ export interface Transaction {
 export interface Budget {
   category: string;
   limit: number;
+  period?: 'monthly' | 'weekly';
+  rollover?: boolean;
+  alertThreshold?: number; // Percentage (e.g., 80 for 80%)
+  type?: 'need' | 'want' | 'neutral'; // For needs vs wants analysis
 }
 
 export interface User {
@@ -28,11 +33,24 @@ export interface SavingsEntry {
   date: string;
   amount: number;
   description?: string;
+  goalId?: string; // Link to a specific goal
+}
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+  category: 'emergency' | 'vacation' | 'home' | 'car' | 'education' | 'retirement' | 'other';
+  autoContribution?: number; // Monthly auto-contribution amount
+  createdAt: string;
 }
 
 export interface SavingsData {
   monthlySalary: number;
   entries: SavingsEntry[];
+  goals?: SavingsGoal[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -92,6 +110,30 @@ export interface TrackingData {
   lockSettings: LockSettings;
 }
 
+export type InvestmentType = 'stock' | 'mutual_fund' | 'etf' | 'sip' | 'gold' | 'crypto';
+
+export interface Investment {
+  id: string;
+  type: InvestmentType;
+  name: string;
+  symbol?: string;
+  units: number;
+  investedAmount: number;
+  currentValue: number;
+  purchaseDate: string;
+  dividends?: number;
+  xirr?: number; // Extended Internal Rate of Return
+}
+
+export interface InvestmentData {
+  investments: Investment[];
+  portfolioAllocation: Record<InvestmentType, number>;
+  totalInvested: number;
+  totalCurrentValue: number;
+  totalProfitLoss: number;
+  totalReturns: number;
+}
+
 export interface AppState {
   transactions: Transaction[];
   budgets: Budget[];
@@ -99,6 +141,7 @@ export interface AppState {
   preferences?: Record<string, boolean>;
   savings?: SavingsData;
   tracking?: TrackingData;
+  investments?: InvestmentData;
 }
 
 export const CATEGORIES = [
@@ -112,6 +155,16 @@ export const CATEGORIES = [
   'Investment',
   'Other'
 ];
+
+export const SUBCATEGORIES: Record<string, string[]> = {
+  'Food': ['Groceries', 'Dining Out', 'Snacks', 'Beverages'],
+  'Transport': ['Fuel', 'Public Transit', 'Ride Share', 'Parking', 'Maintenance'],
+  'Entertainment': ['Movies', 'Games', 'Streaming', 'Events', 'Hobbies'],
+  'Shopping': ['Clothing', 'Electronics', 'Home', 'Gifts'],
+  'Health': ['Medical', 'Pharmacy', 'Insurance', 'Fitness'],
+  'Investment': ['Stocks', 'Mutual Funds', 'ETFs', 'SIP', 'Gold', 'Crypto'],
+  'Other': ['Miscellaneous']
+};
 
 export const INCOME_CATEGORIES = ['Salary', 'Investment', 'Other'];
 export const EXPENSE_CATEGORIES = CATEGORIES.filter(c => !INCOME_CATEGORIES.includes(c));

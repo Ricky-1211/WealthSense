@@ -136,7 +136,11 @@ const Navbar: React.FC = () => {
             className={`${isMobile ? 'w-8 h-8' : 'w-9 h-9'} rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden ring-2 ring-emerald-100 dark:ring-emerald-900 shrink-0 cursor-pointer hover:ring-emerald-200 dark:hover:ring-emerald-800 transition-all`}
           >
             {user?.avatar ? (
-              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+              user.avatar.startsWith('data:') || user.avatar.startsWith('http') ? (
+                <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-2xl flex items-center justify-center w-full h-full">{user.avatar}</span>
+              )
             ) : (
               <div className="w-full h-full flex items-center justify-center text-slate-500 dark:text-slate-400">
                 <UserIcon size={isMobile ? 16 : 18} />

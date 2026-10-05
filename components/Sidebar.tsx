@@ -42,6 +42,7 @@ const Sidebar: React.FC = () => {
     { to: '/reports', icon: <PieChart size={20} />, label: 'Reports' },
     { to: '/budgets', icon: <Wallet size={20} />, label: 'Budgets' },
     { to: '/savings', icon: <PiggyBank size={20} />, label: 'Savings Tracker' },
+    { to: '/investments', icon: <TrendingUp size={20} />, label: 'Investments' },
     { to: '/tracking', icon: <Shield size={20} />, label: 'Tracking' },
     { to: '/ai-insights', icon: <Sparkles size={20} />, label: 'AI Insights' },
     { to: '/calendar', icon: <Calendar size={20} />, label: 'Calendar' },

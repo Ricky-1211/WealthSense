@@ -189,9 +189,17 @@ const TrackingPage: React.FC = () => {
   };
 
   // Receipt Management
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
   const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      alert(`File is too large. Maximum allowed size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+      e.target.value = '';
+      return;
+    }
 
     try {
       const imageBase64 = await imageToBase64(file);
@@ -220,6 +228,12 @@ const TrackingPage: React.FC = () => {
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      alert(`File is too large. Maximum allowed size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+      e.target.value = '';
+      return;
+    }
 
     try {
       const csvText = await readFileAsText(file);
@@ -758,9 +772,12 @@ const TrackingPage: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             <h3 className="text-lg font-bold text-slate-800 mb-4">Upload Receipt</h3>
-            <label className="flex items-center justify-center space-x-2 px-6 py-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-500 transition-all">
-              <Camera size={24} className="text-slate-400" />
-              <span className="font-bold text-slate-600">Click to scan receipt</span>
+            <label className="flex flex-col items-center justify-center space-y-1 px-6 py-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-500 transition-all">
+              <div className="flex items-center space-x-2">
+                <Camera size={24} className="text-slate-400" />
+                <span className="font-bold text-slate-600">Click to scan receipt</span>
+              </div>
+              <span className="text-xs text-slate-400">Max file size: 5MB</span>
               <input
                 type="file"
                 accept="image/*"
@@ -822,9 +839,12 @@ const TrackingPage: React.FC = () => {
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
               <h3 className="text-lg font-bold text-slate-800 mb-4">Import Data</h3>
               <p className="text-slate-500 text-sm mb-4">Import transactions from CSV/Excel file</p>
-              <label className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 transition-all cursor-pointer">
-                <Upload size={20} />
-                <span>Import from CSV</span>
+              <label className="w-full flex flex-col items-center justify-center space-y-1 px-6 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 transition-all cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <Upload size={20} />
+                  <span>Import from CSV</span>
+                </div>
+                <span className="text-xs font-normal text-blue-100">Max file size: 5MB</span>
                 <input
                   type="file"
                   accept=".csv,.xlsx,.xls"

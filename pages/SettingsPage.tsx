@@ -8,12 +8,19 @@ const SettingsPage: React.FC = () => {
   const { user, logout, updateUser, updateUserPreferences, preferences } = useAppContext();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showAvatarOptions, setShowAvatarOptions] = useState(false);
   const [localPreferences, setLocalPreferences] = useState<Record<string, boolean>>({
     smartNotifications: true,
     biometricLock: false,
     highContrastMode: false,
     realtimeSyncing: true,
   });
+
+  const presetAvatars = [
+    '👨‍💼', '👩‍💼', '🧑‍💼', '👨‍🎨', '👩‍🎨', '🧑‍🎨',
+    '👨‍🔬', '👩‍🔬', '🧑‍🔬', '👨‍🚀', '👩‍🚀', '🧑‍🚀',
+    '🦸', '🦸‍♀️', '🦊', '🐱', '🐶', '🦁'
+  ];
 
   useEffect(() => {
     if (preferences) {
@@ -22,7 +29,17 @@ const SettingsPage: React.FC = () => {
   }, [preferences]);
 
   const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+    setShowAvatarOptions(true);
+  };
+
+  const handlePresetAvatarSelect = async (emoji: string) => {
+    try {
+      await updateUser(undefined, emoji);
+      setShowAvatarOptions(false);
+    } catch (error) {
+      console.error('Failed to update avatar:', error);
+      alert('Failed to update avatar. Please try again.');
+    }
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,16 +51,57 @@ const SettingsPage: React.FC = () => {
       return;
     }
 
-    // Convert file to data URL
+    // Check file size (max 5MB)
+    const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxFileSize) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    // Compress and resize image before converting to data URL
     const reader = new FileReader();
-    reader.onloadend = async () => {
-      const dataUrl = reader.result as string;
-      try {
-        await updateUser(undefined, dataUrl);
-      } catch (error) {
-        console.error('Failed to update avatar:', error);
-        alert('Failed to update avatar. Please try again.');
-      }
+    reader.onload = async (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Resize to max 100x100 pixels (smaller to ensure under Firebase limit)
+        const maxSize = 100;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Compress to JPEG with 0.5 quality
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+        
+        updateUser(undefined, dataUrl).catch((error: any) => {
+          console.error('Failed to update avatar:', error);
+          if (error?.message?.includes('Photo URL too long')) {
+            alert('Image is too large after compression. Please try a different image.');
+          } else {
+            alert('Failed to update avatar. Please try again.');
+          }
+        }).finally(() => {
+          setShowAvatarOptions(false);
+        });
+      };
+      img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
@@ -98,7 +156,11 @@ const SettingsPage: React.FC = () => {
                 className="w-24 h-24 bg-emerald-100 rounded-3xl flex items-center justify-center text-emerald-500 overflow-hidden ring-4 ring-white shadow-xl rotate-3 hover:ring-emerald-200 transition-all cursor-pointer group"
               >
                 {user?.avatar ? (
-                  <img src={user.avatar} className="w-full h-full object-cover" alt="Avatar" />
+                  user.avatar.startsWith('data:') || user.avatar.startsWith('http') ? (
+                    <img src={user.avatar} className="w-full h-full object-cover" alt="Avatar" />
+                  ) : (
+                    <span className="text-5xl">{user.avatar}</span>
+                  )
                 ) : (
                   <UserIcon size={32} />
                 )}
@@ -185,6 +247,44 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Avatar Options Modal */}
+      {showAvatarOptions && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAvatarOptions(false)}>
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-slate-800 mb-4">Choose Avatar</h3>
+            <div className="grid grid-cols-6 gap-3 mb-4">
+              {presetAvatars.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handlePresetAvatarSelect(emoji)}
+                  className="w-12 h-12 text-3xl flex items-center justify-center bg-slate-100 rounded-xl hover:bg-emerald-100 hover:scale-110 transition-all"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+            <div className="border-t border-slate-200 pt-4">
+              <p className="text-sm text-slate-500 mb-3">Or upload your own:</p>
+              <button
+                onClick={() => {
+                  setShowAvatarOptions(false);
+                  fileInputRef.current?.click();
+                }}
+                className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all"
+              >
+                Upload Image
+              </button>
+            </div>
+            <button
+              onClick={() => setShowAvatarOptions(false)}
+              className="w-full py-3 mt-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

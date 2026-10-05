@@ -2,21 +2,37 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import TransactionTable from '../components/TransactionTable';
-import { Search, Filter, Plus, FileText, Download } from 'lucide-react';
+import { Search, Filter, Plus, FileText, Download, X } from 'lucide-react';
 import AddTransactionModal from '../components/AddTransactionModal';
+import { SUBCATEGORIES, CATEGORIES } from '../types';
 
 const TransactionsPage: React.FC = () => {
   const { transactions, deleteTransaction, addTransaction } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterSubcategory, setFilterSubcategory] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         t.category.toLowerCase().includes(searchTerm.toLowerCase());
+                         t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (t.subcategory && t.subcategory.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = filterType === 'all' || t.type === filterType;
-    return matchesSearch && matchesType;
+    const matchesCategory = filterCategory === 'all' || t.category === filterCategory;
+    const matchesSubcategory = filterSubcategory === 'all' || t.subcategory === filterSubcategory;
+    return matchesSearch && matchesType && matchesCategory && matchesSubcategory;
   });
+
+  const clearFilters = () => {
+    setFilterType('all');
+    setFilterCategory('all');
+    setFilterSubcategory('all');
+    setSearchTerm('');
+  };
+
+  const hasActiveFilters = filterType !== 'all' || filterCategory !== 'all' || filterSubcategory !== 'all' || searchTerm !== '';
 
   return (
     <div className="space-y-4 md:space-y-6 animate-in slide-in-from-bottom-2 duration-500">
@@ -40,37 +56,87 @@ const TransactionsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col md:flex-row gap-3 md:gap-4">
-        <div className="flex-1 relative">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 dark:text-slate-500">
-            <Search size={18} />
-          </span>
-          <input
-            type="text"
-            placeholder="Search by name or category..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-700 transition-all text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="flex p-1 bg-slate-100 dark:bg-slate-700 rounded-lg">
-            {(['all', 'income', 'expense'] as const).map(type => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-2 md:px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${
-                  filterType === type ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
+      <div className="bg-white dark:bg-slate-800 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col gap-3">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1 relative">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 dark:text-slate-500">
+              <Search size={18} />
+            </span>
+            <input
+              type="text"
+              placeholder="Search by name, category, or subcategory..."
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-700 transition-all text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <button className="hidden sm:block p-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg">
-            <Filter size={18} />
-          </button>
+          <div className="flex items-center space-x-2">
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-700 rounded-lg">
+              {(['all', 'income', 'expense'] as const).map(type => (
+                <button
+                  key={type}
+                  onClick={() => setFilterType(type)}
+                  className={`px-2 md:px-4 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${
+                    filterType === type ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-2 ${showFilters ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600'} rounded-lg transition-all`}
+            >
+              <Filter size={18} />
+            </button>
+            {hasActiveFilters && (
+              <button 
+                onClick={clearFilters}
+                className="p-2 text-rose-500 hover:text-rose-600 bg-rose-50 border border-rose-200 rounded-lg transition-all"
+                title="Clear filters"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Advanced Filters */}
+        {showFilters && (
+          <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+            <div className="flex-1">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">Category</label>
+              <select
+                value={filterCategory}
+                onChange={(e) => {
+                  setFilterCategory(e.target.value);
+                  setFilterSubcategory('all');
+                }}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200"
+              >
+                <option value="all">All Categories</option>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">Subcategory</label>
+              <select
+                value={filterSubcategory}
+                onChange={(e) => setFilterSubcategory(e.target.value)}
+                disabled={filterCategory === 'all' || !SUBCATEGORIES[filterCategory]}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="all">All Subcategories</option>
+                {filterCategory !== 'all' && SUBCATEGORIES[filterCategory]?.map(sub => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl md:rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden min-h-[400px]">

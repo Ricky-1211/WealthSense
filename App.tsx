@@ -16,6 +16,7 @@ import AuthPage from './pages/AuthPage';
 import Calder from './pages/calder';
 import SavingsProgressPage from './pages/SavingsProgressPage';
 import TrackingPage from './pages/TrackingPage';
+import InvestmentsPage from './pages/InvestmentsPage';
 import { useIsMobile } from './hooks/useIsMobile';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -51,6 +52,7 @@ const App: React.FC = () => {
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/budgets" element={<BudgetsPage />} />
+            <Route path="/investments" element={<InvestmentsPage />} />
             <Route path="/ai-insights" element={<AIServicePage />} />
             <Route path="/calendar" element={<Calder />} />
             <Route path="/settings" element={<SettingsPage />} />
